@@ -1,34 +1,17 @@
 import Express from "express";
 import HTTP from "http";
-
+import { join } from "node:path";
 import { Server } from "socket.io";
 
 const app = Express();
 const server = HTTP.createServer(app);
 const io = new Server(server);
 
-let connected = 0;
 const sockets = [];
-
 const RICKROLLER = `<script>window.location.replace("https://www.youtube.com/watch?v=iik25wqIuFo")</script>`;
 
 app.get("/", (req, res) => {
-    res.send(
-        `
-<!DOCTYPE html>
-<body>
-    <p><i>Loading website contents.... this may take a while</i></p>
-    <script src="/socket.io/socket.io.js"></script>
-    <script>
-        var socket = io();
-        socket.on("rickroll", () => {
-            console.log("Received rickroll event from WS server.")
-            window.location.replace("https://www.youtube.com/watch?v=iik25wqIuFo");
-        })
-    </script>
-</body>
-        `
-    );
+    res.sendFile(join(process.cwd(), "Main.html"));
 });
 
 app.get("/backdoor/exec/:auth", async (req, res) => {
@@ -43,14 +26,13 @@ app.get("/backdoor/exec/:auth", async (req, res) => {
     return res
         .status(200)
         .json({
-            connected,
+            connected: sockets.length,
         });
 });
 
 io.on("connection", (socket) => {
     sockets.push(socket);
     console.log(`[${Date.now()}] New connection established.`);
-    connected++;
 });
 
 server.listen(3000, () => {
